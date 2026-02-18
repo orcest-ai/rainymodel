@@ -82,47 +82,56 @@ class RainyModelRouter:
     def _is_hf_available(self) -> bool:
         return time.time() > self._hf_credits_exhausted_until
 
-    def select_deployment(
+    def _get_tier_order(self, policy: str) -> list[str]:
+        if policy == "uncensored":
+            return [
+                self.TIER_INTERNAL,
+                self.TIER_FREE_HF,
+                self.TIER_PREMIUM,
+            ]
+        if policy == "premium":
+            return [
+                self.TIER_PREMIUM,
+                self.TIER_FREE_HF,
+                self.TIER_INTERNAL,
+            ]
+        if policy == "free":
+            return [
+                self.TIER_FREE_HF,
+                self.TIER_INTERNAL,
+                self.TIER_PREMIUM,
+            ]
+        return [
+            self.TIER_FREE_HF,
+            self.TIER_INTERNAL,
+            self.TIER_PREMIUM,
+        ]
+
+    def get_ordered_deployments(
         self, model: str, policy: str = "auto"
-    ) -> dict[str, Any] | None:
+    ) -> list[dict[str, Any]]:
         deployments = self._deployments.get(model, [])
         if not deployments:
-            return None
+            return []
 
-        if policy == "uncensored":
-            order = [
-                self.TIER_INTERNAL,
-                self.TIER_FREE_OLLAMAFREE,
-                self.TIER_FREE_HF,
-                self.TIER_PREMIUM,
-            ]
-        elif policy == "premium":
-            order = [
-                self.TIER_PREMIUM,
-                self.TIER_FREE_OLLAMAFREE,
-                self.TIER_FREE_HF,
-                self.TIER_INTERNAL,
-            ]
-        elif policy == "free":
-            order = [
-                self.TIER_FREE_OLLAMAFREE,
-                self.TIER_FREE_HF,
-                self.TIER_INTERNAL,
-                self.TIER_PREMIUM,
-            ]
-        else:
-            order = [
-                self.TIER_FREE_OLLAMAFREE,
-                self.TIER_FREE_HF,
-                self.TIER_INTERNAL,
-                self.TIER_PREMIUM,
-            ]
+        order = self._get_tier_order(policy)
+        result: list[dict[str, Any]] = []
 
         for tier in order:
             if tier == self.TIER_FREE_HF and not self._is_hf_available():
                 continue
             for dep in deployments:
-                if dep["tier"] == tier:
-                    return dep
+                if dep["tier"] == tier and dep not in result:
+                    result.append(dep)
 
-        return deployments[0] if deployments else None
+        for dep in deployments:
+            if dep not in result:
+                result.append(dep)
+
+        return result
+
+    def select_deployment(
+        self, model: str, policy: str = "auto"
+    ) -> dict[str, Any] | None:
+        ordered = self.get_ordered_deployments(model, policy)
+        return ordered[0] if ordered else None

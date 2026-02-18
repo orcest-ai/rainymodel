@@ -184,72 +184,58 @@ async def chat_completions(request: Request):
     start_time = time.time()
     route_info = {"route": "unknown", "upstream": "unknown", "model": "unknown"}
 
-    try:
-        selected = _rm_router.select_deployment(model, policy)
+    deployments = _rm_router.get_ordered_deployments(model, policy)
+    last_error = None
 
-        if selected:
-            route_info = selected["route_info"]
-            params = selected["litellm_params"].copy()
-            params["messages"] = body.get("messages", [])
-            if body.get("temperature") is not None:
-                params["temperature"] = body["temperature"]
-            if body.get("max_tokens") is not None:
-                params["max_tokens"] = body["max_tokens"]
-            if body.get("stream") is not None:
-                params["stream"] = body["stream"]
-            if body.get("top_p") is not None:
-                params["top_p"] = body["top_p"]
+    for dep in deployments:
+        route_info = dep["route_info"]
+        params = dep["litellm_params"].copy()
+        params["messages"] = body.get("messages", [])
+        if body.get("temperature") is not None:
+            params["temperature"] = body["temperature"]
+        if body.get("max_tokens") is not None:
+            params["max_tokens"] = body["max_tokens"]
+        if body.get("stream") is not None:
+            params["stream"] = body["stream"]
+        if body.get("top_p") is not None:
+            params["top_p"] = body["top_p"]
 
-            response = await litellm.acompletion(**params)
-        else:
-            response = await _router.acompletion(**body)
-            route_info = {"route": "fallback", "upstream": "router", "model": model}
-
-        elapsed = time.time() - start_time
-
-        if hasattr(response, "model_dump"):
-            result = response.model_dump()
-        else:
-            result = dict(response)
-
-        headers = {
-            "x-rainymodel-route": route_info["route"],
-            "x-rainymodel-upstream": route_info["upstream"],
-            "x-rainymodel-model": route_info["model"],
-            "x-rainymodel-latency-ms": str(int(elapsed * 1000)),
-        }
-
-        return JSONResponse(content=result, headers=headers)
-
-    except Exception as e:
-        elapsed = time.time() - start_time
         try:
-            response = await _router.acompletion(**body)
+            response = await litellm.acompletion(**params)
+            elapsed = time.time() - start_time
+
             if hasattr(response, "model_dump"):
                 result = response.model_dump()
             else:
                 result = dict(response)
 
             headers = {
-                "x-rainymodel-route": "fallback",
-                "x-rainymodel-upstream": "router",
-                "x-rainymodel-model": model,
+                "x-rainymodel-route": route_info["route"],
+                "x-rainymodel-upstream": route_info["upstream"],
+                "x-rainymodel-model": route_info["model"],
                 "x-rainymodel-latency-ms": str(int(elapsed * 1000)),
-                "x-rainymodel-fallback-reason": str(type(e).__name__),
             }
+            if last_error is not None:
+                headers["x-rainymodel-fallback-reason"] = str(type(last_error).__name__)
+
             return JSONResponse(content=result, headers=headers)
-        except Exception as fallback_err:
-            return JSONResponse(
-                status_code=502,
-                content={
-                    "error": {
-                        "message": f"All upstreams failed: {e!s} | fallback: {fallback_err!s}",
-                        "type": "upstream_error",
-                    }
-                },
-                headers={
-                    "x-rainymodel-route": "error",
-                    "x-rainymodel-upstream": "none",
-                    "x-rainymodel-model": model,
-                },
-            )
+        except Exception as e:
+            last_error = e
+            continue
+
+    elapsed = time.time() - start_time
+    return JSONResponse(
+        status_code=502,
+        content={
+            "error": {
+                "message": f"All upstreams failed for {model}: {last_error!s}" if last_error else f"No deployments found for {model}",
+                "type": "upstream_error",
+            }
+        },
+        headers={
+            "x-rainymodel-route": "error",
+            "x-rainymodel-upstream": "none",
+            "x-rainymodel-model": model,
+            "x-rainymodel-latency-ms": str(int(elapsed * 1000)),
+        },
+    )

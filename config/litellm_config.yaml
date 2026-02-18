@@ -11,12 +11,21 @@ model_list:
 
   - model_name: rainymodel/auto
     litellm_params:
-      model: openai/qwen2.5:7b
-      api_base: ${OLLAMA_BASE_URL:-http://localhost:11434}/v1
+      model: openai/qwen2.5:14b
+      api_base: ${OLLAMA_PRIMARY_URL:-http://164.92.147.36:11434}/v1
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120
     model_info:
-      description: "Auto routing - internal Ollama (uncensored)"
+      description: "Auto routing - primary Ollama 16GB (qwen2.5:14b)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: openai/qwen2.5:7b
+      api_base: ${OLLAMA_SECONDARY_URL:-http://178.128.196.3:11434}/v1
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 120
+    model_info:
+      description: "Auto routing - secondary Ollama 8GB (qwen2.5:7b support)"
 
   - model_name: rainymodel/auto
     litellm_params:
@@ -38,12 +47,21 @@ model_list:
 
   - model_name: rainymodel/chat
     litellm_params:
-      model: openai/qwen2.5:7b
-      api_base: ${OLLAMA_BASE_URL:-http://localhost:11434}/v1
+      model: openai/qwen2.5:14b
+      api_base: ${OLLAMA_PRIMARY_URL:-http://164.92.147.36:11434}/v1
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120
     model_info:
-      description: "Chat - internal Ollama (uncensored)"
+      description: "Chat - primary Ollama 16GB (qwen2.5:14b)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: openai/qwen2.5:7b
+      api_base: ${OLLAMA_SECONDARY_URL:-http://178.128.196.3:11434}/v1
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 120
+    model_info:
+      description: "Chat - secondary Ollama 8GB (qwen2.5:7b support)"
 
   - model_name: rainymodel/chat
     litellm_params:
@@ -66,11 +84,20 @@ model_list:
   - model_name: rainymodel/code
     litellm_params:
       model: openai/qwen2.5-coder:7b
-      api_base: ${OLLAMA_BASE_URL:-http://localhost:11434}/v1
+      api_base: ${OLLAMA_PRIMARY_URL:-http://164.92.147.36:11434}/v1
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120
     model_info:
-      description: "Code - internal Ollama (Qwen Coder 7B)"
+      description: "Code - primary Ollama 16GB (Qwen Coder 7B)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: openai/qwen2.5-coder:7b
+      api_base: ${OLLAMA_SECONDARY_URL:-http://178.128.196.3:11434}/v1
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 120
+    model_info:
+      description: "Code - secondary Ollama 8GB (Qwen Coder 7B support)"
 
   - model_name: rainymodel/code
     litellm_params:
@@ -100,12 +127,21 @@ model_list:
 
   - model_name: rainymodel/agent
     litellm_params:
-      model: openai/qwen2.5:7b
-      api_base: ${OLLAMA_BASE_URL:-http://localhost:11434}/v1
+      model: openai/qwen2.5:14b
+      api_base: ${OLLAMA_PRIMARY_URL:-http://164.92.147.36:11434}/v1
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120
     model_info:
-      description: "Agent - internal Ollama fallback"
+      description: "Agent - primary Ollama 16GB fallback"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: openai/qwen2.5:7b
+      api_base: ${OLLAMA_SECONDARY_URL:-http://178.128.196.3:11434}/v1
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 120
+    model_info:
+      description: "Agent - secondary Ollama 8GB fallback"
 
 router_settings:
   routing_strategy: "simple-shuffle"

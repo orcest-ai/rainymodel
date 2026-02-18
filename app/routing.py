@@ -54,8 +54,11 @@ class RainyModelRouter:
         if "openrouter" in model or "premium" in desc:
             return self.TIER_PREMIUM
 
+        ollama_primary = os.getenv("OLLAMA_PRIMARY_URL", "164.92.147.36:11434")
+        ollama_secondary = os.getenv("OLLAMA_SECONDARY_URL", "178.128.196.3:11434")
         ollama_base = os.getenv("OLLAMA_BASE_URL", "localhost:11434")
-        if ollama_base in api_base or "internal" in desc or "ollama" in desc:
+        if (ollama_primary in api_base or ollama_secondary in api_base
+                or ollama_base in api_base or "internal" in desc or "ollama" in desc):
             return self.TIER_INTERNAL
 
         return self.TIER_PREMIUM

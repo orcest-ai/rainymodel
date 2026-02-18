@@ -1,0 +1,157 @@
+model_list:
+  # ── rainymodel/auto ── routes FREE → INTERNAL → PREMIUM ──
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: openai/rainymodel-auto
+      api_base: ${OLLAMAFREE_API_BASE:-https://ollamafreeapi.orcest.ai}
+      api_key: ${OLLAMAFREE_API_KEY:-sk-free}
+      timeout: 30
+    model_info:
+      description: "Auto routing - free tier (ollamafreeapi)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: huggingface/Qwen/Qwen2.5-72B-Instruct
+      api_base: https://router.huggingface.co/v1
+      api_key: ${HF_TOKEN}
+      timeout: 60
+    model_info:
+      description: "Auto routing - HF Router (free credits)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: openai/huihui_ai/qwen2.5-abliterated:14b
+      api_base: ${OLLAMA_BASE_URL:-http://localhost:11434/v1}
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 120
+    model_info:
+      description: "Auto routing - internal Ollama (uncensored)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: openrouter/qwen/qwen-2.5-72b-instruct
+      api_key: ${OPENROUTER_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Auto routing - OpenRouter (premium fallback)"
+
+  # ── rainymodel/chat ── general/persian chat ──
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: openai/rainymodel-chat
+      api_base: ${OLLAMAFREE_API_BASE:-https://ollamafreeapi.orcest.ai}
+      api_key: ${OLLAMAFREE_API_KEY:-sk-free}
+      timeout: 30
+    model_info:
+      description: "Chat - free tier (ollamafreeapi)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: huggingface/Qwen/Qwen2.5-72B-Instruct
+      api_base: https://router.huggingface.co/v1
+      api_key: ${HF_TOKEN}
+      timeout: 60
+    model_info:
+      description: "Chat - HF Router"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: openai/huihui_ai/qwen2.5-abliterated:14b
+      api_base: ${OLLAMA_BASE_URL:-http://localhost:11434/v1}
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 120
+    model_info:
+      description: "Chat - internal Ollama (uncensored)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: openrouter/qwen/qwen-2.5-72b-instruct
+      api_key: ${OPENROUTER_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Chat - OpenRouter fallback"
+
+  # ── rainymodel/code ── coding tasks ──
+  - model_name: rainymodel/code
+    litellm_params:
+      model: openai/rainymodel-code
+      api_base: ${OLLAMAFREE_API_BASE:-https://ollamafreeapi.orcest.ai}
+      api_key: ${OLLAMAFREE_API_KEY:-sk-free}
+      timeout: 30
+    model_info:
+      description: "Code - free tier (ollamafreeapi)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: huggingface/Qwen/Qwen2.5-Coder-32B-Instruct
+      api_base: https://router.huggingface.co/v1
+      api_key: ${HF_TOKEN}
+      timeout: 60
+    model_info:
+      description: "Code - HF Router (Qwen Coder)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: openai/qwen2.5-coder:7b
+      api_base: ${OLLAMA_BASE_URL:-http://localhost:11434/v1}
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 120
+    model_info:
+      description: "Code - internal Ollama (Qwen Coder 7B)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: openrouter/qwen/qwen-2.5-coder-32b-instruct
+      api_key: ${OPENROUTER_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Code - OpenRouter fallback"
+
+  # ── rainymodel/agent ── agent/complex tasks (prefer premium) ──
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: openai/rainymodel-agent
+      api_base: ${OLLAMAFREE_API_BASE:-https://ollamafreeapi.orcest.ai}
+      api_key: ${OLLAMAFREE_API_KEY:-sk-free}
+      timeout: 30
+    model_info:
+      description: "Agent - free tier (ollamafreeapi)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: openrouter/anthropic/claude-sonnet-4
+      api_key: ${OPENROUTER_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - OpenRouter premium (Claude)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: huggingface/Qwen/Qwen2.5-72B-Instruct
+      api_base: https://router.huggingface.co/v1
+      api_key: ${HF_TOKEN}
+      timeout: 90
+    model_info:
+      description: "Agent - HF Router fallback"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: openai/huihui_ai/qwen2.5-abliterated:14b
+      api_base: ${OLLAMA_BASE_URL:-http://localhost:11434/v1}
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 120
+    model_info:
+      description: "Agent - internal Ollama fallback"
+
+router_settings:
+  routing_strategy: "simple-shuffle"
+  num_retries: 3
+  timeout: 120
+  retry_after: 5
+  allowed_fails: 2
+  cooldown_time: 60
+
+general_settings:
+  master_key: ${RAINYMODEL_MASTER_KEY}
+  alerting: null
+  drop_params: true

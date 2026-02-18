@@ -1,0 +1,33 @@
+services:
+  - type: web
+    runtime: docker
+    name: rainymodel
+    plan: starter
+    repo: https://github.com/orcest-ai/rainymodel
+    branch: main
+    rootDir: /
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    numInstances: 1
+    domains:
+      - rm.orcest.ai
+    healthCheckPath: /health
+    envVars:
+      - key: RAINYMODEL_MASTER_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OLLAMA_BASE_URL
+        sync: false
+      - key: OLLAMA_API_KEY
+        sync: false
+      - key: OLLAMAFREE_API_BASE
+        value: "https://ollamafreeapi.orcest.ai"
+      - key: OLLAMAFREE_API_KEY
+        value: "sk-free"
+      - key: LITELLM_CONFIG_PATH
+        value: "/app/config/litellm_config.yaml"
+      - key: RAINYMODEL_DEBUG
+        value: "false"

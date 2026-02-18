@@ -11,7 +11,7 @@ model_list:
 
   - model_name: rainymodel/auto
     litellm_params:
-      model: openai/huihui_ai/qwen2.5-abliterated:14b
+      model: openai/qwen2.5:14b
       api_base: ${OLLAMA_BASE_URL:-http://localhost:11434}/v1
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120
@@ -38,7 +38,7 @@ model_list:
 
   - model_name: rainymodel/chat
     litellm_params:
-      model: openai/huihui_ai/qwen2.5-abliterated:14b
+      model: openai/qwen2.5:14b
       api_base: ${OLLAMA_BASE_URL:-http://localhost:11434}/v1
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120
@@ -100,7 +100,7 @@ model_list:
 
   - model_name: rainymodel/agent
     litellm_params:
-      model: openai/huihui_ai/qwen2.5-abliterated:14b
+      model: openai/qwen2.5:14b
       api_base: ${OLLAMA_BASE_URL:-http://localhost:11434}/v1
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120

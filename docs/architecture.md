@@ -49,7 +49,7 @@
 | Lamino | llm.orcest.ai | Node.js (AnythingLLM fork) | Render |
 | Orcide | ide.orcest.ai | VS Code fork | Render |
 | Maestrist | agent.orcest.ai | Python (OpenHands fork) | Render |
-| RainyModel | rm.orcest.ai | FastAPI + LiteLLM | Render |
+| RainyModel | rm.orcest.ai | FastAPI + RainyModel Core | Render |
 | Login Portal | login.orcest.ai | Authentik | Render + PostgreSQL |
 | Ollama Backend | 167.99.141.84 | Ollama | DigitalOcean |
 | Free Ollama API | ollamafreeapi.orcest.ai | Proxy | Render |

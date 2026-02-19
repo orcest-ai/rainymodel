@@ -1,87 +1,71 @@
-# RainyModel
+<a name="readme-top"></a>
 
-Intelligent LLM routing proxy for the [Orcest AI](https://orcest.ai) ecosystem.
+<div align="center">
+  <h1 align="center" style="border-bottom: none">RainyModel: LLM Routing Proxy</h1>
+  <p align="center"><b>Part of the Orcest AI Ecosystem</b></p>
+</div>
 
-## Architecture
+<div align="center">
+  <a href="https://github.com/orcest-ai/rainymodel/blob/main/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-20B2AA?style=for-the-badge" alt="MIT License"></a>
+</div>
+
+<hr>
+
+RainyModel is an intelligent LLM routing proxy that provides OpenAI-compatible API endpoints with automatic routing across free, internal, and premium providers. It is the central LLM orchestration layer of the **Orcest AI** ecosystem.
+
+### Orcest AI Ecosystem
+
+| Service | Domain | Role |
+|---------|--------|------|
+| **Lamino** | llm.orcest.ai | LLM Workspace |
+| **RainyModel** | rm.orcest.ai | LLM Routing Proxy |
+| **Maestrist** | agent.orcest.ai | AI Agent Platform |
+| **Orcide** | ide.orcest.ai | Cloud IDE |
+| **Login** | login.orcest.ai | SSO Authentication |
+
+## Features
+
+- **Smart Routing**: Automatic routing chain: FREE (HF) -> INTERNAL (Ollama) -> PREMIUM (OpenRouter)
+- **OpenAI-Compatible API**: Drop-in replacement for any OpenAI-compatible client
+- **Model Aliases**: `rainymodel/auto`, `rainymodel/chat`, `rainymodel/code`, `rainymodel/agent`
+- **Dual Ollama Backends**: 16GB primary (qwen2.5:14b) + 8GB secondary (qwen2.5:7b)
+- **Policy Headers**: `X-RainyModel-Policy` for routing control (default/uncensored/premium)
+- **Observability**: Response headers with route, upstream, model, latency info
+- **Circuit Breaker**: Automatic failover on upstream errors
+- **Rate Limiting**: Per-user API key rate limits
+
+## API Endpoints
 
 ```
-Clients (Lamino, Maestrist, Orcide, orcest.ai)
-              |
-              v
-    +-------------------+
-    |   RainyModel      |  rm.orcest.ai
-    |   Proxy           |  OpenAI-compatible API
-    +-----+-----+------+
-          |     |     |
-    +-----+  +--+  +--+----+
-    v        v         v
- FREE     INTERNAL   PREMIUM
- (HF/     (Ollama    (OpenRouter)
-  ollamafree) DO)
+POST /v1/chat/completions  - Chat completions (OpenAI-compatible)
+GET  /v1/models            - List available model aliases
+GET  /health               - Health check
 ```
 
 ## Model Aliases
 
 | Alias | Use Case | Routing Priority |
 |-------|----------|-----------------|
-| `rainymodel/auto` | General purpose | FREE -> INTERNAL -> PREMIUM |
-| `rainymodel/chat` | Conversation/Persian | FREE -> INTERNAL -> PREMIUM |
-| `rainymodel/code` | Coding tasks | FREE -> INTERNAL -> PREMIUM |
-| `rainymodel/agent` | Agent/complex tasks | FREE -> PREMIUM -> INTERNAL |
-
-## API Endpoints
-
-- `GET /v1/models` - List available models
-- `POST /v1/chat/completions` - Chat completions (OpenAI-compatible)
-- `GET /health` - Health check
+| `rainymodel/auto` | General purpose | HF -> Ollama -> OpenRouter |
+| `rainymodel/chat` | Conversational | HF -> Ollama -> OpenRouter |
+| `rainymodel/code` | Code generation | HF Coder -> Ollama Coder -> OpenRouter |
+| `rainymodel/agent` | Agent tasks | HF -> Ollama -> OpenRouter |
 
 ## Response Headers
 
-Every response includes routing observability headers:
-
-- `x-rainymodel-route`: `free` | `internal` | `premium`
-- `x-rainymodel-upstream`: `ollamafreeapi` | `hf` | `ollama` | `openrouter`
-- `x-rainymodel-model`: actual model used
-- `x-rainymodel-latency-ms`: request latency
-
-## Routing Policies
-
-Set via `X-RainyModel-Policy` header:
-
-- `auto` (default): cheapest/free first
-- `uncensored`: prefer internal Ollama (abliterated models)
-- `premium`: prefer OpenRouter
-- `free`: only use free tiers
-
-## Quick Start
-
-```bash
-cp .env.example .env
-# Edit .env with your keys
-
-pip install .
-uvicorn app.main:app --host 0.0.0.0 --port 8080
-
-# Or with Docker
-docker build -t rainymodel .
-docker run -p 8080:8080 --env-file .env rainymodel
-```
+| Header | Description |
+|--------|-------------|
+| `x-rainymodel-route` | free / internal / premium |
+| `x-rainymodel-upstream` | hf / ollama / openrouter |
+| `x-rainymodel-model` | Actual model used |
+| `x-rainymodel-latency-ms` | Request latency |
 
 ## Deployment
 
-Deployed on Render via `render.yaml`. Auto-deploys from `main` branch.
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `RAINYMODEL_MASTER_KEY` | Yes | API authentication key |
-| `HF_TOKEN` | Yes | Hugging Face token for HF Router |
-| `OPENROUTER_API_KEY` | Yes | OpenRouter API key |
-| `OLLAMA_BASE_URL` | No | Ollama server URL |
-| `OLLAMA_API_KEY` | No | Ollama auth token |
-| `OLLAMAFREE_API_BASE` | No | Free Ollama API proxy URL |
+Deployed on Render with auto-deploy from `main` branch. See `render.yaml` for configuration.
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
+
+Part of the [Orcest AI](https://orcest.ai) ecosystem.

@@ -89,6 +89,7 @@ class RainyModelRouter:
         if policy == "uncensored":
             return [
                 self.TIER_INTERNAL,
+                self.TIER_FREE_OLLAMAFREE,
                 self.TIER_FREE_HF,
                 self.TIER_PREMIUM,
             ]
@@ -96,16 +97,20 @@ class RainyModelRouter:
             return [
                 self.TIER_PREMIUM,
                 self.TIER_FREE_HF,
+                self.TIER_FREE_OLLAMAFREE,
                 self.TIER_INTERNAL,
             ]
         if policy == "free":
             return [
                 self.TIER_FREE_HF,
+                self.TIER_FREE_OLLAMAFREE,
                 self.TIER_INTERNAL,
                 self.TIER_PREMIUM,
             ]
+        # auto (default): FREE → INTERNAL → PREMIUM
         return [
             self.TIER_FREE_HF,
+            self.TIER_FREE_OLLAMAFREE,
             self.TIER_INTERNAL,
             self.TIER_PREMIUM,
         ]

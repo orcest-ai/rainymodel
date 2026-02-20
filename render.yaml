@@ -23,6 +23,10 @@ services:
         sync: false
       - key: OLLAMA_API_KEY
         sync: false
+      - key: OLLAMA_PRIMARY_URL
+        sync: false
+      - key: OLLAMA_SECONDARY_URL
+        sync: false
       - key: OLLAMAFREE_API_BASE
         value: "https://ollamafreeapi.orcest.ai"
       - key: OLLAMAFREE_API_KEY

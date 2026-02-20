@@ -1,5 +1,5 @@
 model_list:
-  # ── rainymodel/auto ── routes FREE (HF) → INTERNAL (Ollama) → PREMIUM (OpenRouter) ──
+  # ── rainymodel/auto ── routes FREE (HF/ollamafreeapi) → INTERNAL (Ollama) → PREMIUM (OpenRouter) ──
   - model_name: rainymodel/auto
     litellm_params:
       model: huggingface/Qwen/Qwen2.5-72B-Instruct
@@ -8,6 +8,15 @@ model_list:
       timeout: 60
     model_info:
       description: "Auto routing - HF Router (free credits)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: openai/qwen2.5:latest
+      api_base: ${OLLAMAFREE_API_BASE:-https://ollamafreeapi.orcest.ai}/v1
+      api_key: ${OLLAMAFREE_API_KEY:-sk-free}
+      timeout: 60
+    model_info:
+      description: "Auto routing - ollamafreeapi (free distributed Ollama)"
 
   - model_name: rainymodel/auto
     litellm_params:
@@ -47,6 +56,15 @@ model_list:
 
   - model_name: rainymodel/chat
     litellm_params:
+      model: openai/qwen2.5:latest
+      api_base: ${OLLAMAFREE_API_BASE:-https://ollamafreeapi.orcest.ai}/v1
+      api_key: ${OLLAMAFREE_API_KEY:-sk-free}
+      timeout: 60
+    model_info:
+      description: "Chat - ollamafreeapi (free distributed Ollama)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
       model: openai/qwen2.5:14b
       api_base: ${OLLAMA_PRIMARY_URL:-http://164.92.147.36:11434}/v1
       api_key: ${OLLAMA_API_KEY:-ollama}
@@ -80,6 +98,15 @@ model_list:
       timeout: 60
     model_info:
       description: "Code - HF Router (Qwen Coder)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: openai/qwen2.5-coder:latest
+      api_base: ${OLLAMAFREE_API_BASE:-https://ollamafreeapi.orcest.ai}/v1
+      api_key: ${OLLAMAFREE_API_KEY:-sk-free}
+      timeout: 60
+    model_info:
+      description: "Code - ollamafreeapi (free distributed Ollama)"
 
   - model_name: rainymodel/code
     litellm_params:
@@ -124,6 +151,15 @@ model_list:
       timeout: 90
     model_info:
       description: "Agent - HF Router fallback"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: openai/qwen2.5:latest
+      api_base: ${OLLAMAFREE_API_BASE:-https://ollamafreeapi.orcest.ai}/v1
+      api_key: ${OLLAMAFREE_API_KEY:-sk-free}
+      timeout: 60
+    model_info:
+      description: "Agent - ollamafreeapi fallback"
 
   - model_name: rainymodel/agent
     litellm_params:

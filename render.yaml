@@ -13,6 +13,7 @@ services:
       - rm.orcest.ai
     healthCheckPath: /health
     envVars:
+      - fromGroup: orcest-ai-shared-apis
       - key: RAINYMODEL_MASTER_KEY
         sync: false
       - key: HF_TOKEN

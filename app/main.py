@@ -1,7 +1,9 @@
 """
 RainyModel - Intelligent LLM routing proxy for the Orcest AI ecosystem.
 
-Routes requests through: FREE (ollamafreeapi/HF) -> INTERNAL (Ollama) -> PREMIUM (OpenRouter)
+Routes requests through:
+  FREE (ollamafreeapi/HF) -> INTERNAL (Ollama) ->
+  PREMIUM (OpenRouter/OpenAI/Anthropic/xAI/DeepSeek/Gemini)
 """
 
 import json
@@ -17,6 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from litellm import Router
 
+from app.analytics import RequestRecord, collector
+from app.dashboard import router as dashboard_router
 from app.routing import RainyModelRouter
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -80,7 +84,10 @@ async def lifespan(_app: FastAPI):
         cooldown_time=router_settings.get("cooldown_time", 60),
     )
     _rm_router = RainyModelRouter(model_list=model_list)
+
+    collector.log("INFO", "RainyModel started", deployments=len(model_list))
     yield
+    collector.log("INFO", "RainyModel shutting down")
     _router = None
     _rm_router = None
 
@@ -88,7 +95,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="RainyModel",
     description="Intelligent LLM routing proxy for the Orcest AI ecosystem",
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -102,6 +109,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── mount dashboard ────────────────────────────────────────────
+app.include_router(dashboard_router)
 
 
 def _check_auth(request: Request) -> bool:
@@ -144,7 +154,7 @@ KNOWN_MODELS = [
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "rainymodel", "version": "0.1.0"}
+    return {"status": "healthy", "service": "rainymodel", "version": "0.2.0"}
 
 
 @app.get("/")
@@ -152,12 +162,12 @@ async def root():
     return {
         "name": "RainyModel",
         "description": "Intelligent LLM routing proxy for the Orcest AI ecosystem",
-        "version": "0.1.0",
-        "docs": "/docs",
+        "version": "0.2.0",
         "endpoints": {
             "models": "/v1/models",
             "chat_completions": "/v1/chat/completions",
             "health": "/health",
+            "dashboard": "/dashboard?key=<RAINYMODEL_MASTER_KEY>",
         },
     }
 
@@ -199,6 +209,13 @@ async def chat_completions(request: Request):
 
     deployments = _rm_router.get_ordered_deployments(model, policy)
     last_error = None
+    tried_upstreams: list[str] = []
+
+    collector.log(
+        "DEBUG",
+        f"Routing {model} policy={policy} stream={is_stream}",
+        deployments=len(deployments),
+    )
 
     for dep in deployments:
         route_info = dep["route_info"]
@@ -227,6 +244,37 @@ async def chat_completions(request: Request):
             response = await litellm.acompletion(**params)
             elapsed = time.time() - start_time
 
+            # extract token usage
+            usage = getattr(response, "usage", None)
+            input_tokens = getattr(usage, "prompt_tokens", 0) or 0
+            output_tokens = getattr(usage, "completion_tokens", 0) or 0
+
+            # record success
+            collector.record(
+                RequestRecord(
+                    timestamp=time.time(),
+                    model_alias=model,
+                    upstream=route_info["upstream"],
+                    route=route_info["route"],
+                    actual_model=route_info["model"],
+                    policy=policy,
+                    latency_ms=int(elapsed * 1000),
+                    success=True,
+                    status_code=200,
+                    is_stream=is_stream,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    fallback_from=tried_upstreams[-1] if tried_upstreams else None,
+                )
+            )
+
+            if tried_upstreams:
+                collector.log(
+                    "WARN",
+                    f"Fallback success: {' -> '.join(tried_upstreams)} -> {route_info['upstream']}",
+                    model=model,
+                )
+
             headers = {
                 "x-rainymodel-route": route_info["route"],
                 "x-rainymodel-upstream": route_info["upstream"],
@@ -250,10 +298,41 @@ async def chat_completions(request: Request):
 
             return JSONResponse(content=result, headers=headers)
         except Exception as e:
+            collector.log(
+                "ERROR",
+                f"Upstream failed: {route_info['upstream']} ({type(e).__name__}: {e!s:.120})",
+                upstream=route_info["upstream"],
+                model=route_info["model"],
+            )
+            tried_upstreams.append(route_info["upstream"])
             last_error = e
             continue
 
+    # all upstreams failed
     elapsed = time.time() - start_time
+    collector.record(
+        RequestRecord(
+            timestamp=time.time(),
+            model_alias=model,
+            upstream=tried_upstreams[-1] if tried_upstreams else "none",
+            route="error",
+            actual_model=model,
+            policy=policy,
+            latency_ms=int(elapsed * 1000),
+            success=False,
+            status_code=502,
+            is_stream=is_stream,
+            error_type=type(last_error).__name__ if last_error else "NoDeployments",
+            error_message=str(last_error)[:200] if last_error else "No deployments",
+            fallback_from=tried_upstreams[-2] if len(tried_upstreams) > 1 else None,
+        )
+    )
+    collector.log(
+        "ERROR",
+        f"All upstreams failed for {model} after trying {len(tried_upstreams)} providers",
+        tried=tried_upstreams,
+    )
+
     return JSONResponse(
         status_code=502,
         content={
@@ -283,6 +362,11 @@ async def _stream_chunks(response, route_info: dict):
                 data = dict(chunk)
             yield f"data: {json.dumps(data)}\n\n"
     except Exception as e:
+        collector.log(
+            "ERROR",
+            f"Stream interrupted: {route_info['upstream']} ({e!s:.120})",
+            upstream=route_info["upstream"],
+        )
         error_data = {
             "error": {
                 "message": f"Stream interrupted from {route_info['upstream']}: {e!s}",

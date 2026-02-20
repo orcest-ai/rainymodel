@@ -4,6 +4,7 @@ RainyModel - Intelligent LLM routing proxy for the Orcest AI ecosystem.
 Routes requests through: FREE (ollamafreeapi/HF) -> INTERNAL (Ollama) -> PREMIUM (OpenRouter)
 """
 
+import json
 import os
 import time
 from contextlib import asynccontextmanager
@@ -13,14 +14,16 @@ import litellm
 import yaml
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from litellm import Router
 
 from app.routing import RainyModelRouter
 
 LITELLM_CONFIG_PATH = os.getenv(
     "LITELLM_CONFIG_PATH",
-    os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "litellm_config.yaml"),
+    os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "config", "litellm_config.yaml"
+    ),
 )
 
 litellm.drop_params = True
@@ -183,6 +186,7 @@ async def chat_completions(request: Request):
     body["model"] = model
 
     policy = request.headers.get("X-RainyModel-Policy", "auto")
+    is_stream = body.get("stream", False)
 
     start_time = time.time()
     route_info = {"route": "unknown", "upstream": "unknown", "model": "unknown"}
@@ -194,23 +198,28 @@ async def chat_completions(request: Request):
         route_info = dep["route_info"]
         params = dep["litellm_params"].copy()
         params["messages"] = body.get("messages", [])
-        if body.get("temperature") is not None:
-            params["temperature"] = body["temperature"]
-        if body.get("max_tokens") is not None:
-            params["max_tokens"] = body["max_tokens"]
-        if body.get("stream") is not None:
-            params["stream"] = body["stream"]
-        if body.get("top_p") is not None:
-            params["top_p"] = body["top_p"]
+        if is_stream:
+            params["stream"] = True
+        for key in (
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "frequency_penalty",
+            "presence_penalty",
+            "stop",
+            "n",
+            "tools",
+            "tool_choice",
+            "response_format",
+            "seed",
+        ):
+            val = body.get(key)
+            if val is not None:
+                params[key] = val
 
         try:
             response = await litellm.acompletion(**params)
             elapsed = time.time() - start_time
-
-            if hasattr(response, "model_dump"):
-                result = response.model_dump()
-            else:
-                result = dict(response)
 
             headers = {
                 "x-rainymodel-route": route_info["route"],
@@ -219,7 +228,19 @@ async def chat_completions(request: Request):
                 "x-rainymodel-latency-ms": str(int(elapsed * 1000)),
             }
             if last_error is not None:
-                headers["x-rainymodel-fallback-reason"] = str(type(last_error).__name__)
+                headers["x-rainymodel-fallback-reason"] = type(last_error).__name__
+
+            if is_stream:
+                return StreamingResponse(
+                    _stream_chunks(response, route_info),
+                    media_type="text/event-stream",
+                    headers=headers,
+                )
+
+            if hasattr(response, "model_dump"):
+                result = response.model_dump()
+            else:
+                result = dict(response)
 
             return JSONResponse(content=result, headers=headers)
         except Exception as e:
@@ -231,7 +252,9 @@ async def chat_completions(request: Request):
         status_code=502,
         content={
             "error": {
-                "message": f"All upstreams failed for {model}: {last_error!s}" if last_error else f"No deployments found for {model}",
+                "message": f"All upstreams failed for {model}: {last_error!s}"
+                if last_error
+                else f"No deployments found for {model}",
                 "type": "upstream_error",
             }
         },
@@ -242,3 +265,23 @@ async def chat_completions(request: Request):
             "x-rainymodel-latency-ms": str(int(elapsed * 1000)),
         },
     )
+
+
+async def _stream_chunks(response, route_info: dict):
+    """Yield SSE chunks from a LiteLLM streaming response."""
+    try:
+        async for chunk in response:
+            if hasattr(chunk, "model_dump"):
+                data = chunk.model_dump()
+            else:
+                data = dict(chunk)
+            yield f"data: {json.dumps(data)}\n\n"
+    except Exception as e:
+        error_data = {
+            "error": {
+                "message": f"Stream interrupted from {route_info['upstream']}: {e!s}",
+                "type": "stream_error",
+            }
+        }
+        yield f"data: {json.dumps(error_data)}\n\n"
+    yield "data: [DONE]\n\n"

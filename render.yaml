@@ -31,6 +31,18 @@ services:
         value: "https://ollamafreeapi.orcest.ai"
       - key: OLLAMAFREE_API_KEY
         value: "sk-free"
+      # Direct API provider keys
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: XAI_API_KEY
+        sync: false
+      # Config
       - key: LITELLM_CONFIG_PATH
         value: "/app/config/litellm_config.yaml"
       - key: RAINYMODEL_DEBUG

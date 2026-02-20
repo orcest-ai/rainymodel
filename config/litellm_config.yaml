@@ -1,5 +1,10 @@
 model_list:
-  # ── rainymodel/auto ── routes FREE (HF/ollamafreeapi) → INTERNAL (Ollama) → PREMIUM (OpenRouter) ──
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # rainymodel/auto — General-purpose routing
+  # FREE (HF/ollamafreeapi) → INTERNAL (Ollama) → DIRECT (cheapest first) → PREMIUM (OpenRouter)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # --- FREE tier ---
   - model_name: rainymodel/auto
     litellm_params:
       model: huggingface/Qwen/Qwen2.5-72B-Instruct
@@ -7,7 +12,7 @@ model_list:
       api_key: ${HF_TOKEN}
       timeout: 60
     model_info:
-      description: "Auto routing - HF Router (free credits)"
+      description: "Auto - HF Router (free credits)"
 
   - model_name: rainymodel/auto
     litellm_params:
@@ -16,8 +21,9 @@ model_list:
       api_key: ${OLLAMAFREE_API_KEY:-sk-free}
       timeout: 60
     model_info:
-      description: "Auto routing - ollamafreeapi (free distributed Ollama)"
+      description: "Auto - ollamafreeapi (free distributed Ollama)"
 
+  # --- INTERNAL tier ---
   - model_name: rainymodel/auto
     litellm_params:
       model: openai/qwen2.5:14b
@@ -25,7 +31,7 @@ model_list:
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120
     model_info:
-      description: "Auto routing - primary Ollama 16GB (qwen2.5:14b)"
+      description: "Auto - primary Ollama 16GB (qwen2.5:14b)"
 
   - model_name: rainymodel/auto
     litellm_params:
@@ -34,17 +40,63 @@ model_list:
       api_key: ${OLLAMA_API_KEY:-ollama}
       timeout: 120
     model_info:
-      description: "Auto routing - secondary Ollama 8GB (qwen2.5:7b support)"
+      description: "Auto - secondary Ollama 8GB (qwen2.5:7b support)"
 
+  # --- DIRECT tier (cheapest first) ---
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: ${DEEPSEEK_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Auto - DeepSeek Chat direct"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: ${GEMINI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Auto - Gemini Flash direct"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: ${OPENAI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Auto - OpenAI direct-openai (GPT-4o-mini)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: xai/grok-2-latest
+      api_key: ${XAI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Auto - xAI direct-xai (Grok-2)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: claude-haiku-4-5-20251001
+      api_key: ${ANTHROPIC_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Auto - Claude direct-claude (Haiku 4.5)"
+
+  # --- PREMIUM tier ---
   - model_name: rainymodel/auto
     litellm_params:
       model: openrouter/qwen/qwen-2.5-72b-instruct
       api_key: ${OPENROUTER_API_KEY}
       timeout: 90
     model_info:
-      description: "Auto routing - OpenRouter (premium fallback)"
+      description: "Auto - OpenRouter (premium fallback)"
 
-  # ── rainymodel/chat ── general/persian chat ──
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # rainymodel/chat — General/Persian conversation
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # --- FREE tier ---
   - model_name: rainymodel/chat
     litellm_params:
       model: huggingface/Qwen/Qwen2.5-72B-Instruct
@@ -63,6 +115,7 @@ model_list:
     model_info:
       description: "Chat - ollamafreeapi (free distributed Ollama)"
 
+  # --- INTERNAL tier ---
   - model_name: rainymodel/chat
     litellm_params:
       model: openai/qwen2.5:14b
@@ -81,6 +134,48 @@ model_list:
     model_info:
       description: "Chat - secondary Ollama 8GB (qwen2.5:7b support)"
 
+  # --- DIRECT tier ---
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: ${DEEPSEEK_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Chat - DeepSeek Chat direct"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: ${GEMINI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Chat - Gemini Flash direct"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: ${OPENAI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Chat - OpenAI direct-openai (GPT-4o-mini)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: xai/grok-2-latest
+      api_key: ${XAI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Chat - xAI direct-xai (Grok-2)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: claude-haiku-4-5-20251001
+      api_key: ${ANTHROPIC_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Chat - Claude direct-claude (Haiku 4.5)"
+
+  # --- PREMIUM tier ---
   - model_name: rainymodel/chat
     litellm_params:
       model: openrouter/qwen/qwen-2.5-72b-instruct
@@ -89,7 +184,11 @@ model_list:
     model_info:
       description: "Chat - OpenRouter fallback"
 
-  # ── rainymodel/code ── coding tasks ──
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # rainymodel/code — Coding tasks
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # --- FREE tier ---
   - model_name: rainymodel/code
     litellm_params:
       model: huggingface/Qwen/Qwen2.5-Coder-32B-Instruct
@@ -108,6 +207,7 @@ model_list:
     model_info:
       description: "Code - ollamafreeapi (free distributed Ollama)"
 
+  # --- INTERNAL tier ---
   - model_name: rainymodel/code
     litellm_params:
       model: openai/qwen2.5-coder:7b
@@ -126,6 +226,48 @@ model_list:
     model_info:
       description: "Code - secondary Ollama 8GB (Qwen Coder 7B support)"
 
+  # --- DIRECT tier (coding-optimized models) ---
+  - model_name: rainymodel/code
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: ${DEEPSEEK_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Code - DeepSeek direct (excellent coder)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: ${GEMINI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Code - Gemini Flash direct"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: ${OPENAI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Code - OpenAI direct-openai (GPT-4o-mini)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: xai/grok-2-latest
+      api_key: ${XAI_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Code - xAI direct-xai (Grok-2)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: claude-haiku-4-5-20251001
+      api_key: ${ANTHROPIC_API_KEY}
+      timeout: 60
+    model_info:
+      description: "Code - Claude direct-claude (Haiku 4.5)"
+
+  # --- PREMIUM tier ---
   - model_name: rainymodel/code
     litellm_params:
       model: openrouter/qwen/qwen-2.5-coder-32b-instruct
@@ -134,7 +276,53 @@ model_list:
     model_info:
       description: "Code - OpenRouter fallback"
 
-  # ── rainymodel/agent ── agent/complex tasks (prefer premium) ──
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # rainymodel/agent — Agent/complex tasks (direct APIs preferred)
+  # Claude Sonnet direct > GPT-4o direct > Gemini Pro > others
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # --- DIRECT tier (best agent models first) ---
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      api_key: ${ANTHROPIC_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - Claude direct-claude (Sonnet 4 — best for agents)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: gpt-4o
+      api_key: ${OPENAI_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - OpenAI direct-openai (GPT-4o)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: xai/grok-2-latest
+      api_key: ${XAI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Agent - xAI direct-xai (Grok-2)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: gemini/gemini-2.5-pro-preview-06-05
+      api_key: ${GEMINI_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - Gemini Pro direct (long context)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: ${DEEPSEEK_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Agent - DeepSeek direct"
+
+  # --- PREMIUM tier ---
   - model_name: rainymodel/agent
     litellm_params:
       model: openrouter/anthropic/claude-sonnet-4
@@ -143,6 +331,7 @@ model_list:
     model_info:
       description: "Agent - OpenRouter premium (Claude)"
 
+  # --- FREE tier ---
   - model_name: rainymodel/agent
     litellm_params:
       model: huggingface/Qwen/Qwen2.5-72B-Instruct
@@ -161,6 +350,7 @@ model_list:
     model_info:
       description: "Agent - ollamafreeapi fallback"
 
+  # --- INTERNAL tier ---
   - model_name: rainymodel/agent
     litellm_params:
       model: openai/qwen2.5:14b

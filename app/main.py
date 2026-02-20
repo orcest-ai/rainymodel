@@ -19,11 +19,17 @@ from litellm import Router
 
 from app.routing import RainyModelRouter
 
-LITELLM_CONFIG_PATH = os.getenv(
-    "LITELLM_CONFIG_PATH",
-    os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "config", "litellm_config.yaml"
-    ),
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+_LITELLM_CONFIG_CANDIDATES = [
+    os.getenv("LITELLM_CONFIG_PATH", ""),
+    os.path.join(_PROJECT_ROOT, "config", "litellm_config.yaml"),
+    "/app/config/litellm_config.yaml",
+]
+
+LITELLM_CONFIG_PATH = next(
+    (p for p in _LITELLM_CONFIG_CANDIDATES if p and os.path.isfile(p)),
+    os.path.join(_PROJECT_ROOT, "config", "litellm_config.yaml"),
 )
 
 litellm.drop_params = True

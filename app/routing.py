@@ -2,7 +2,7 @@
 RainyModel routing logic.
 
 Determines which upstream to use based on model alias and policy.
-Routes: FREE (ollamafreeapi/HF) -> INTERNAL (Ollama) -> PREMIUM (OpenRouter)
+Routes: FREE (ollamafreeapi/HF) -> INTERNAL (Ollama) -> PREMIUM (OpenRouter/OpenAI/Anthropic/xAI/DeepSeek/Gemini)
 """
 
 import os
@@ -15,6 +15,11 @@ class RainyModelRouter:
     TIER_FREE_HF = "free-hf"
     TIER_INTERNAL = "internal"
     TIER_PREMIUM = "premium"
+    TIER_PREMIUM_OPENAI = "premium-openai"
+    TIER_PREMIUM_ANTHROPIC = "premium-anthropic"
+    TIER_PREMIUM_XAI = "premium-xai"
+    TIER_PREMIUM_DEEPSEEK = "premium-deepseek"
+    TIER_PREMIUM_GEMINI = "premium-gemini"
 
     def __init__(self, model_list: list[dict[str, Any]]):
         self._deployments: dict[str, list[dict[str, Any]]] = {}
@@ -41,6 +46,11 @@ class RainyModelRouter:
 
             self._deployments.setdefault(name, []).append(deployment)
 
+    _PREMIUM_TIERS = frozenset({
+        "premium", "premium-openai", "premium-anthropic",
+        "premium-xai", "premium-deepseek", "premium-gemini",
+    })
+
     def _classify_tier(self, params: dict, desc: str) -> str:
         api_base = params.get("api_base", "")
         model = params.get("model", "")
@@ -51,7 +61,18 @@ class RainyModelRouter:
         if "huggingface" in api_base or "hf" in desc or model.startswith("huggingface/"):
             return self.TIER_FREE_HF
 
-        if "openrouter" in model or "premium" in desc:
+        if model.startswith("openai/") and not api_base:
+            return self.TIER_PREMIUM_OPENAI
+        if model.startswith("anthropic/") or model.startswith("claude"):
+            return self.TIER_PREMIUM_ANTHROPIC
+        if model.startswith("xai/"):
+            return self.TIER_PREMIUM_XAI
+        if model.startswith("deepseek/"):
+            return self.TIER_PREMIUM_DEEPSEEK
+        if model.startswith("gemini/"):
+            return self.TIER_PREMIUM_GEMINI
+
+        if "openrouter" in model:
             return self.TIER_PREMIUM
 
         ollama_primary = os.getenv("OLLAMA_PRIMARY_URL", "164.92.147.36:11434")
@@ -70,14 +91,20 @@ class RainyModelRouter:
             return "internal"
         return "premium"
 
+    _UPSTREAM_MAP = {
+        "free-ollamafree": "ollamafreeapi",
+        "free-hf": "hf",
+        "internal": "ollama",
+        "premium": "openrouter",
+        "premium-openai": "openai",
+        "premium-anthropic": "anthropic",
+        "premium-xai": "xai",
+        "premium-deepseek": "deepseek",
+        "premium-gemini": "gemini",
+    }
+
     def _tier_to_upstream(self, tier: str) -> str:
-        if tier == self.TIER_FREE_OLLAMAFREE:
-            return "ollamafreeapi"
-        if tier == self.TIER_FREE_HF:
-            return "hf"
-        if tier == self.TIER_INTERNAL:
-            return "ollama"
-        return "openrouter"
+        return self._UPSTREAM_MAP.get(tier, "openrouter")
 
     def mark_hf_credits_exhausted(self, duration_seconds: int = 86400):
         self._hf_credits_exhausted_until = time.time() + duration_seconds
@@ -85,16 +112,25 @@ class RainyModelRouter:
     def _is_hf_available(self) -> bool:
         return time.time() > self._hf_credits_exhausted_until
 
+    _ALL_PREMIUM_TIERS = [
+        TIER_PREMIUM,
+        TIER_PREMIUM_OPENAI,
+        TIER_PREMIUM_ANTHROPIC,
+        TIER_PREMIUM_XAI,
+        TIER_PREMIUM_DEEPSEEK,
+        TIER_PREMIUM_GEMINI,
+    ]
+
     def _get_tier_order(self, policy: str) -> list[str]:
         if policy == "uncensored":
             return [
                 self.TIER_INTERNAL,
                 self.TIER_FREE_HF,
-                self.TIER_PREMIUM,
+                *self._ALL_PREMIUM_TIERS,
             ]
         if policy == "premium":
             return [
-                self.TIER_PREMIUM,
+                *self._ALL_PREMIUM_TIERS,
                 self.TIER_FREE_HF,
                 self.TIER_INTERNAL,
             ]
@@ -102,12 +138,13 @@ class RainyModelRouter:
             return [
                 self.TIER_FREE_HF,
                 self.TIER_INTERNAL,
-                self.TIER_PREMIUM,
+                *self._ALL_PREMIUM_TIERS,
             ]
+        # auto: FREE → INTERNAL → PREMIUM
         return [
             self.TIER_FREE_HF,
             self.TIER_INTERNAL,
-            self.TIER_PREMIUM,
+            *self._ALL_PREMIUM_TIERS,
         ]
 
     def get_ordered_deployments(

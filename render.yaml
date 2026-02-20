@@ -23,6 +23,16 @@ services:
         sync: false
       - key: OLLAMA_API_KEY
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: XAI_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
       - key: OLLAMAFREE_API_BASE
         value: "https://ollamafreeapi.orcest.ai"
       - key: OLLAMAFREE_API_KEY

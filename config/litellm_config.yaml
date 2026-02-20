@@ -35,6 +35,46 @@ model_list:
     model_info:
       description: "Auto routing - OpenRouter (premium fallback)"
 
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: ${OPENAI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Auto routing - OpenAI GPT-4o (premium)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: ${ANTHROPIC_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Auto routing - Anthropic Claude Sonnet (premium)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: xai/grok-2
+      api_key: ${XAI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Auto routing - xAI Grok-2 (premium)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: ${DEEPSEEK_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Auto routing - DeepSeek Chat (premium)"
+
+  - model_name: rainymodel/auto
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: ${GEMINI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Auto routing - Google Gemini Flash (premium)"
+
   # ── rainymodel/chat ── general/persian chat ──
   - model_name: rainymodel/chat
     litellm_params:
@@ -70,6 +110,46 @@ model_list:
       timeout: 90
     model_info:
       description: "Chat - OpenRouter fallback"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: ${OPENAI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Chat - OpenAI GPT-4o (premium)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: ${ANTHROPIC_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Chat - Anthropic Claude Sonnet (premium)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: xai/grok-2
+      api_key: ${XAI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Chat - xAI Grok-2 (premium)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: ${DEEPSEEK_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Chat - DeepSeek Chat (premium)"
+
+  - model_name: rainymodel/chat
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: ${GEMINI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Chat - Google Gemini Flash (premium)"
 
   # ── rainymodel/code ── coding tasks ──
   - model_name: rainymodel/code
@@ -107,6 +187,46 @@ model_list:
     model_info:
       description: "Code - OpenRouter fallback"
 
+  - model_name: rainymodel/code
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: ${OPENAI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Code - OpenAI GPT-4o (premium)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: ${ANTHROPIC_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Code - Anthropic Claude Sonnet (premium)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: xai/grok-2
+      api_key: ${XAI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Code - xAI Grok-2 (premium)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: deepseek/deepseek-coder
+      api_key: ${DEEPSEEK_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Code - DeepSeek Coder (premium)"
+
+  - model_name: rainymodel/code
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: ${GEMINI_API_KEY}
+      timeout: 90
+    model_info:
+      description: "Code - Google Gemini Flash (premium)"
+
   # ── rainymodel/agent ── agent/complex tasks (prefer premium) ──
   - model_name: rainymodel/agent
     litellm_params:
@@ -142,6 +262,46 @@ model_list:
       timeout: 120
     model_info:
       description: "Agent - secondary Ollama 8GB fallback"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: ${OPENAI_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - OpenAI GPT-4o (premium)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: ${ANTHROPIC_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - Anthropic Claude Sonnet (premium)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: xai/grok-2
+      api_key: ${XAI_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - xAI Grok-2 (premium)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: ${DEEPSEEK_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - DeepSeek Chat (premium)"
+
+  - model_name: rainymodel/agent
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: ${GEMINI_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Agent - Google Gemini Flash (premium)"
 
 router_settings:
   routing_strategy: "simple-shuffle"

@@ -3,6 +3,12 @@ RainyModel routing logic.
 
 Determines which upstream to use based on model alias and policy.
 Routes: FREE (ollamafreeapi/HF) -> INTERNAL (Ollama) -> PREMIUM (OpenRouter)
+
+Supports direct provider access via:
+  rainymodel/openrouter/<model>
+  rainymodel/huggingface/<model>
+  rainymodel/ollama/<model>
+  rainymodel/ollamafreeapi/<model>
 """
 
 import os
@@ -10,11 +16,54 @@ import time
 from typing import Any
 
 
+# Direct provider routing: prefix -> (litellm model prefix, api_base env/default, api_key env)
+DIRECT_PROVIDERS = {
+    "openrouter": {
+        "litellm_prefix": "openrouter/",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "timeout": 120,
+        "route": "premium",
+        "upstream": "openrouter",
+    },
+    "huggingface": {
+        "litellm_prefix": "huggingface/",
+        "api_base": "https://router.huggingface.co/v1",
+        "api_key_env": "HF_TOKEN",
+        "timeout": 90,
+        "route": "free",
+        "upstream": "hf",
+    },
+    "ollama": {
+        "litellm_prefix": "openai/",
+        "api_base_env": "OLLAMA_PRIMARY_URL",
+        "api_base_default": "http://164.92.147.36:11434",
+        "api_key_env": "OLLAMA_API_KEY",
+        "api_key_default": "ollama",
+        "timeout": 120,
+        "route": "internal",
+        "upstream": "ollama",
+    },
+    "ollamafreeapi": {
+        "litellm_prefix": "openai/",
+        "api_base_env": "OLLAMAFREE_API_BASE",
+        "api_base_default": "https://ollamafreeapi.orcest.ai",
+        "api_key_env": "OLLAMAFREE_API_KEY",
+        "api_key_default": "sk-free",
+        "timeout": 120,
+        "route": "free",
+        "upstream": "ollamafreeapi",
+    },
+}
+
+
 class RainyModelRouter:
     TIER_FREE_OLLAMAFREE = "free-ollamafree"
     TIER_FREE_HF = "free-hf"
     TIER_INTERNAL = "internal"
     TIER_PREMIUM = "premium"
+
+    # Known alias modes (non-passthrough)
+    KNOWN_MODES = {"auto", "chat", "code", "agent", "document"}
 
     def __init__(self, model_list: list[dict[str, Any]]):
         self._deployments: dict[str, list[dict[str, Any]]] = {}
@@ -40,6 +89,70 @@ class RainyModelRouter:
             }
 
             self._deployments.setdefault(name, []).append(deployment)
+
+    @staticmethod
+    def parse_direct_provider(model: str) -> tuple[str, str] | None:
+        """Parse a direct provider model string.
+
+        Returns (provider_key, downstream_model) or None if not a direct route.
+        E.g. 'rainymodel/openrouter/anthropic/claude-sonnet-4'
+             -> ('openrouter', 'anthropic/claude-sonnet-4')
+        """
+        if not model.startswith("rainymodel/"):
+            return None
+
+        rest = model[len("rainymodel/"):]  # e.g. 'openrouter/anthropic/claude-sonnet-4'
+
+        for provider_key in DIRECT_PROVIDERS:
+            prefix = provider_key + "/"
+            if rest.startswith(prefix):
+                downstream = rest[len(prefix):]
+                if downstream:
+                    return (provider_key, downstream)
+        return None
+
+    @staticmethod
+    def build_direct_deployment(provider_key: str, downstream_model: str) -> dict[str, Any]:
+        """Build a single deployment dict for direct provider access."""
+        cfg = DIRECT_PROVIDERS[provider_key]
+        litellm_model = cfg["litellm_prefix"] + downstream_model
+
+        params: dict[str, Any] = {
+            "model": litellm_model,
+            "timeout": cfg["timeout"],
+        }
+
+        # API base
+        if "api_base" in cfg:
+            params["api_base"] = cfg["api_base"]
+        elif "api_base_env" in cfg:
+            default = cfg.get("api_base_default", "")
+            base = os.getenv(cfg["api_base_env"], default)
+            if base:
+                params["api_base"] = base.rstrip("/") + "/v1"
+
+        # API key
+        if "api_key_env" in cfg:
+            default_key = cfg.get("api_key_default", "")
+            params["api_key"] = os.getenv(cfg["api_key_env"], default_key)
+
+        return {
+            "litellm_params": params,
+            "model_info": {"description": f"Direct {provider_key} access"},
+            "tier": "direct",
+            "route_info": {
+                "route": cfg["route"],
+                "upstream": cfg["upstream"],
+                "model": litellm_model,
+            },
+        }
+
+    def is_known_alias(self, model: str) -> bool:
+        """Check if model is a known RainyModel alias (auto/chat/code/agent/document)."""
+        if not model.startswith("rainymodel/"):
+            return False
+        mode = model[len("rainymodel/"):]
+        return mode in self.KNOWN_MODES
 
     def _classify_tier(self, params: dict, desc: str) -> str:
         api_base = params.get("api_base", "")
@@ -138,3 +251,17 @@ class RainyModelRouter:
     ) -> dict[str, Any] | None:
         ordered = self.get_ordered_deployments(model, policy)
         return ordered[0] if ordered else None
+
+    @staticmethod
+    def list_direct_providers() -> list[dict[str, Any]]:
+        """Return metadata about available direct provider routes."""
+        result = []
+        for key, cfg in DIRECT_PROVIDERS.items():
+            result.append({
+                "provider": key,
+                "prefix": f"rainymodel/{key}/",
+                "route": cfg["route"],
+                "upstream": cfg["upstream"],
+                "description": f"Direct access to {key} models",
+            })
+        return result

@@ -139,6 +139,12 @@ KNOWN_MODELS = [
         "owned_by": "rainymodel",
         "description": "Agent/complex tasks - long context + tool-capable models",
     },
+    {
+        "id": "rainymodel/document",
+        "object": "model",
+        "owned_by": "rainymodel",
+        "description": "Document analysis/summarization - optimized for long context",
+    },
 ]
 
 
@@ -156,6 +162,7 @@ async def root():
         "docs": "/docs",
         "endpoints": {
             "models": "/v1/models",
+            "providers": "/v1/providers",
             "chat_completions": "/v1/chat/completions",
             "health": "/health",
         },
@@ -167,9 +174,37 @@ async def list_models(request: Request):
     if not _check_auth(request):
         return JSONResponse(status_code=401, content={"error": "Unauthorized"})
 
+    from app.routing import RainyModelRouter
+
+    direct_providers = RainyModelRouter.list_direct_providers()
+    provider_models = [
+        {
+            "id": p["prefix"] + "<model>",
+            "object": "model",
+            "owned_by": "rainymodel",
+            "description": p["description"],
+            "provider": p["provider"],
+            "route": p["route"],
+        }
+        for p in direct_providers
+    ]
+
     return {
         "object": "list",
-        "data": KNOWN_MODELS,
+        "data": KNOWN_MODELS + provider_models,
+    }
+
+
+@app.get("/v1/providers")
+async def list_providers(request: Request):
+    if not _check_auth(request):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+
+    from app.routing import RainyModelRouter
+
+    return {
+        "object": "list",
+        "data": RainyModelRouter.list_direct_providers(),
     }
 
 
@@ -197,7 +232,14 @@ async def chat_completions(request: Request):
     start_time = time.time()
     route_info = {"route": "unknown", "upstream": "unknown", "model": "unknown"}
 
-    deployments = _rm_router.get_ordered_deployments(model, policy)
+    # Check for direct provider passthrough (e.g. rainymodel/openrouter/anthropic/claude-sonnet-4)
+    direct = _rm_router.parse_direct_provider(model)
+    if direct:
+        provider_key, downstream_model = direct
+        dep = _rm_router.build_direct_deployment(provider_key, downstream_model)
+        deployments = [dep]
+    else:
+        deployments = _rm_router.get_ordered_deployments(model, policy)
     last_error = None
 
     for dep in deployments:

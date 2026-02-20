@@ -107,6 +107,42 @@ model_list:
     model_info:
       description: "Code - OpenRouter fallback"
 
+  # ── rainymodel/document ── document analysis/summarization ──
+  - model_name: rainymodel/document
+    litellm_params:
+      model: huggingface/Qwen/Qwen2.5-72B-Instruct
+      api_base: https://router.huggingface.co/v1
+      api_key: ${HF_TOKEN}
+      timeout: 90
+    model_info:
+      description: "Document - HF Router (long context)"
+
+  - model_name: rainymodel/document
+    litellm_params:
+      model: openai/qwen2.5:14b
+      api_base: ${OLLAMA_PRIMARY_URL:-http://164.92.147.36:11434}/v1
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 180
+    model_info:
+      description: "Document - primary Ollama 16GB (qwen2.5:14b)"
+
+  - model_name: rainymodel/document
+    litellm_params:
+      model: openai/qwen2.5:7b
+      api_base: ${OLLAMA_SECONDARY_URL:-http://178.128.196.3:11434}/v1
+      api_key: ${OLLAMA_API_KEY:-ollama}
+      timeout: 180
+    model_info:
+      description: "Document - secondary Ollama 8GB (qwen2.5:7b support)"
+
+  - model_name: rainymodel/document
+    litellm_params:
+      model: openrouter/qwen/qwen-2.5-72b-instruct
+      api_key: ${OPENROUTER_API_KEY}
+      timeout: 120
+    model_info:
+      description: "Document - OpenRouter fallback"
+
   # ── rainymodel/agent ── agent/complex tasks (prefer premium) ──
   - model_name: rainymodel/agent
     litellm_params:

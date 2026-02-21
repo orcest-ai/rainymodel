@@ -232,6 +232,14 @@ async def chat_completions(request: Request):
                 "x-rainymodel-upstream": route_info["upstream"],
                 "x-rainymodel-model": route_info["model"],
                 "x-rainymodel-latency-ms": str(int(elapsed * 1000)),
+                "x-rainymodel-policy": policy,
+                "x-rainymodel-requested-model": model,
+                "x-rainymodel-tier-order": ",".join(
+                    d["route_info"]["route"] for d in deployments
+                ),
+                "x-rainymodel-attempts": str(
+                    deployments.index(dep) + 1
+                ),
             }
             if last_error is not None:
                 headers["x-rainymodel-fallback-reason"] = type(last_error).__name__

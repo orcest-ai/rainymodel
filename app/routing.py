@@ -110,12 +110,45 @@ class RainyModelRouter:
             self.TIER_PREMIUM,
         ]
 
+    # Maps user-facing provider names to upstream identifiers for provider override.
+    _PROVIDER_UPSTREAM_MAP: dict[str, list[str]] = {
+        "ollama": ["ollama"],
+        "openrouter": ["openrouter"],
+        "huggingface": ["hf"],
+        "hf": ["hf"],
+        "ollamafreeapi": ["ollamafreeapi"],
+        "openai": ["openai"],
+        "anthropic": ["anthropic"],
+        "deepseek": ["deepseek"],
+        "gemini": ["gemini"],
+        "groq": ["groq"],
+        "xai": ["xai"],
+    }
+
     def get_ordered_deployments(
-        self, model: str, policy: str = "auto"
+        self,
+        model: str,
+        policy: str = "auto",
+        provider_override: str | None = None,
     ) -> list[dict[str, Any]]:
         deployments = self._deployments.get(model, [])
         if not deployments:
             return []
+
+        # If the caller specified a provider override via X-RainyModel-Provider,
+        # filter deployments to only those matching the requested provider.
+        if provider_override:
+            provider_key = provider_override.lower().strip()
+            allowed_upstreams = self._PROVIDER_UPSTREAM_MAP.get(provider_key)
+            if allowed_upstreams:
+                filtered = [
+                    dep for dep in deployments
+                    if dep["route_info"].get("upstream") in allowed_upstreams
+                ]
+                if filtered:
+                    return filtered
+            # If no matching deployments found for the override, fall through
+            # to normal routing so the request still has a chance to succeed.
 
         order = self._get_tier_order(policy)
         result: list[dict[str, Any]] = []
@@ -134,7 +167,12 @@ class RainyModelRouter:
         return result
 
     def select_deployment(
-        self, model: str, policy: str = "auto"
+        self,
+        model: str,
+        policy: str = "auto",
+        provider_override: str | None = None,
     ) -> dict[str, Any] | None:
-        ordered = self.get_ordered_deployments(model, policy)
+        ordered = self.get_ordered_deployments(
+            model, policy, provider_override=provider_override,
+        )
         return ordered[0] if ordered else None

@@ -104,13 +104,30 @@ app.add_middleware(
 )
 
 
-def _check_auth(request: Request) -> bool:
+def _get_valid_keys() -> set[str]:
+    """Collect all valid API keys from environment."""
+    keys: set[str] = set()
     master_key = os.getenv("RAINYMODEL_MASTER_KEY", "")
-    if not master_key:
+    if master_key:
+        keys.add(master_key)
+    # Support comma-separated list of additional service keys
+    extra = os.getenv("RAINYMODEL_API_KEYS", "")
+    if extra:
+        for k in extra.split(","):
+            k = k.strip()
+            if k:
+                keys.add(k)
+    return keys
+
+
+def _check_auth(request: Request) -> bool:
+    valid_keys = _get_valid_keys()
+    # If no keys configured, allow anonymous access
+    if not valid_keys:
         return True
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
-        return auth[7:] == master_key
+        return auth[7:] in valid_keys
     return False
 
 
@@ -165,7 +182,16 @@ async def root():
 @app.get("/v1/models")
 async def list_models(request: Request):
     if not _check_auth(request):
-        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+        return JSONResponse(
+            status_code=401,
+            content={
+                "error": {
+                    "message": "Invalid API key. Check your RAINYMODEL_API_KEY configuration.",
+                    "type": "authentication_error",
+                    "code": "invalid_api_key",
+                }
+            },
+        )
 
     return {
         "object": "list",
@@ -176,7 +202,16 @@ async def list_models(request: Request):
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request):
     if not _check_auth(request):
-        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+        return JSONResponse(
+            status_code=401,
+            content={
+                "error": {
+                    "message": "Invalid API key. Check your RAINYMODEL_API_KEY configuration.",
+                    "type": "authentication_error",
+                    "code": "invalid_api_key",
+                }
+            },
+        )
 
     if _router is None or _rm_router is None:
         return JSONResponse(

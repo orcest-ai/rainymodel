@@ -109,8 +109,21 @@ def _check_auth(request: Request) -> bool:
     if not master_key:
         return True
     auth = request.headers.get("Authorization", "")
-    if auth.startswith("Bearer "):
-        return auth[7:] == master_key
+    if not auth.startswith("Bearer "):
+        return False
+    token = auth[7:]
+    if token == master_key:
+        return True
+    # Accept additional known service keys (comma-separated in env var)
+    extra_keys = os.getenv("RAINYMODEL_SERVICE_KEYS", "")
+    if extra_keys:
+        for key in extra_keys.split(","):
+            if token == key.strip():
+                return True
+    # Accept default Orcide IDE key for out-of-box integration
+    orcide_key = os.getenv("RAINYMODEL_ORCIDE_KEY", "sk-rm-orcide-default")
+    if token == orcide_key:
+        return True
     return False
 
 
